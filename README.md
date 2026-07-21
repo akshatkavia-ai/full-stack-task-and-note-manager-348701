@@ -1,1 +1,3 @@
-# full-stack-task-and-note-manager-348701
+# Project Repository
+
+This is the initial README file for the project.
