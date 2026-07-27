@@ -1,0 +1,52 @@
+name: SonarQube Backend
+
+# Runs the FastAPI backend test suite, generates Cobertura coverage (coverage.xml),
+# and executes SonarQube analysis using the repository's sonar-project.properties.
+#
+# Required repository secrets:
+#   SONAR_HOST_URL - URL of the SonarQube server (e.g. https://sonarqube.example.com)
+#   SONAR_TOKEN    - authentication token for the SonarQube project
+#
+# The pytest options (--cov=app --cov-branch --cov-report=xml:coverage.xml
+# --cov-fail-under=85) are configured in pyproject.toml, so a bare `pytest`
+# produces coverage.xml which the scanner reads via
+# sonar.python.coverage.reportPaths=coverage.xml.
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  sonar-backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: full-stack-task-and-note-manager-348701/fastapi_backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Full history gives SonarQube accurate new-code and blame analysis.
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run tests and generate coverage.xml
+        run: pytest
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v4
+        with:
+          # Ensures the scanner picks up the backend sonar-project.properties.
+          projectBaseDir: full-stack-task-and-note-manager-348701/fastapi_backend
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
